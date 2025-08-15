@@ -1,11 +1,7 @@
 package br.com.grooworks.crestline.controller;
 
-import br.com.grooworks.crestline.domain.dto.CreateCustomerDto;
+import br.com.grooworks.crestline.domain.dto.*;
 import br.com.grooworks.crestline.domain.service.PaymentService;
-import com.braintreegateway.CreditCard;
-import com.braintreegateway.Customer;
-import com.braintreegateway.Result;
-import com.braintreegateway.Transaction;
 import jakarta.validation.Valid;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,33 +18,39 @@ public class PaymentController {
 
     @SneakyThrows
     @GetMapping("/{token}")
-    public ResponseEntity<?> getCard(@PathVariable String token) {
-        CreditCard card = service.getCard(token);
+    public ResponseEntity<SaveCardResponseDTO> getCard(@PathVariable String token) {
+        SaveCardResponseDTO card = service.getCard(token);
         return ResponseEntity.ok(card);
     }
 
+    @GetMapping("/customer/user/{id}")
+    public ResponseEntity<CustomerResDto> getCustomer(@RequestParam Long id) {
+        CustomerResDto customer = service.getCustomerByUserId(id);
+        return ResponseEntity.ok(customer);
+    }
+
     @PostMapping("/pay")
-    public ResponseEntity<?> pay(@RequestParam String token, @RequestParam String amount) {
-        Result<Transaction> pay = service.pay(token, amount);
-        return ResponseEntity.ok(pay.getTarget());
+    public ResponseEntity<PaymentResDto> pay(@RequestParam String token, @RequestParam String amount) {
+        PaymentResDto pay = service.pay(token, amount);
+        return ResponseEntity.ok(pay);
     }
 
     @PostMapping("/save")
-    public ResponseEntity<Customer> saveCardAndCustomer(@RequestBody @Valid CreateCustomerDto dto) {
-        Customer customer = service.saveCardAndCustomer(dto);
+    public ResponseEntity<CustomerResDto> saveCardAndCustomer(@RequestBody @Valid CreateCustomerDto dto) {
+        CustomerResDto customer = service.saveCardAndCustomer(dto);
         return ResponseEntity.ok(customer);
     }
 
     @PutMapping("/{token}")
-    public ResponseEntity<?> updateCard(@PathVariable String token,
-                                        @RequestParam String expirationDate,
-                                        @RequestParam String cvv) {
-        Result<CreditCard> result = service.updateCard(token, expirationDate, cvv);
-        return ResponseEntity.ok(result.getTarget());
+    public ResponseEntity<CardDto> updateCard(@PathVariable String token,
+                                              @RequestParam String expirationDate,
+                                              @RequestParam String cvv) {
+        CardDto cardDto = service.updateCard(token, expirationDate, cvv);
+        return ResponseEntity.ok(cardDto);
     }
 
     @DeleteMapping("/{token}")
-    public ResponseEntity<?> deleteCard(@PathVariable String token) {
+    public ResponseEntity<Void> deleteCard(@PathVariable String token) {
         service.deleteCreditCard(token);
         return ResponseEntity.noContent().build();
     }

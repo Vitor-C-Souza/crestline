@@ -1,14 +1,11 @@
 package br.com.grooworks.crestline.domain.service.impl;
 
 
-import br.com.grooworks.crestline.domain.dto.CreateCustomerDto;
+import br.com.grooworks.crestline.domain.dto.*;
 import br.com.grooworks.crestline.domain.model.CustomerEntity;
 import br.com.grooworks.crestline.domain.repository.CustomerEntityRepository;
 import br.com.grooworks.crestline.domain.service.PaymentService;
-import br.com.grooworks.crestline.infra.exception.PaymentException;
-import br.com.grooworks.crestline.infra.exception.SaveCardException;
-import br.com.grooworks.crestline.infra.exception.UpdateCardException;
-import br.com.grooworks.crestline.infra.exception.deleteCreditCardException;
+import br.com.grooworks.crestline.infra.exception.*;
 import com.braintreegateway.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,16 +24,21 @@ public class PaymentServiceImpl implements PaymentService {
     private CustomerEntityRepository repository;
 
     @Override
-    public CreditCard getCard(String token) {
+    public SaveCardResponseDTO getCard(String token) {
         try {
-            return gateway.creditCard().find(token);
+            CreditCard creditCard = gateway.creditCard().find(token);
+            PaymentMethod paymentMethod = gateway.paymentMethod().find(token);
+            String customerId = paymentMethod.getCustomerId();
+            Customer customer = gateway.customer().find(customerId);
+
+            return new SaveCardResponseDTO(new CardDto(creditCard), customer);
         } catch (Exception e) {
             throw new RuntimeException("Cartão não encontrado: " + e.getMessage());
         }
     }
 
     @Override
-    public Result<Transaction> pay(String token, String amount) {
+    public PaymentResDto pay(String token, String amount) {
         try {
             TransactionRequest request = new TransactionRequest()
                     .amount(new BigDecimal(amount))
@@ -51,7 +53,9 @@ public class PaymentServiceImpl implements PaymentService {
                 throw new PaymentException("Pagamento recusado: " + result.getMessage());
             }
 
-            return result;
+            Transaction transaction = result.getTarget();
+
+            return new PaymentResDto(transaction);
         } catch (NumberFormatException e) {
             throw new PaymentException("Valor inválido para pagamento: " + amount);
 
@@ -64,7 +68,20 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public Customer saveCardAndCustomer(CreateCustomerDto dto) {
+    public CustomerResDto getCustomerByUserId(Long id) {
+        CustomerEntity customerEntity = repository.findByUsuarioId(id)
+                .orElseThrow(() -> new CustomerNotFoundException("Não foi encontrado customer com esse id " + id));
+        try {
+            Customer customer = gateway.customer().find(customerEntity.getCustomerIdBraintree());
+
+            return new CustomerResDto(customer);
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao buscar cliente no Braintree: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public CustomerResDto saveCardAndCustomer(CreateCustomerDto dto) {
         try {
             CustomerRequest request = new CustomerRequest()
                     .firstName(dto.firstName())
@@ -81,19 +98,17 @@ public class PaymentServiceImpl implements PaymentService {
             Customer customer = result.getTarget();
 
             String paymentToken = customer.getPaymentMethods().get(0).getToken();
+            CustomerEntity entity = new CustomerEntity(customer.getId(), dto.cpf(), paymentToken, 1L);
+            repository.save(entity);
 
-            repository.save(
-                    new CustomerEntity(customer.getId(), dto.cpf(), paymentToken, 1L)
-            );
-
-            return customer;
+            return new CustomerResDto(customer);
         } catch (Exception e) {
             throw new SaveCardException("Erro ao criar cliente e salvar cartão: " + e.getMessage());
         }
     }
 
     @Override
-    public Result<CreditCard> updateCard(String token, String expirationDate, String cvv) {
+    public CardDto updateCard(String token, String expirationDate, String cvv) {
         try {
             CreditCardRequest request = new CreditCardRequest()
                     .expirationDate(expirationDate)
@@ -105,7 +120,9 @@ public class PaymentServiceImpl implements PaymentService {
                 throw new UpdateCardException(result.getMessage());
             }
 
-            return result;
+            CreditCard creditCard = result.getTarget();
+
+            return new CardDto(creditCard);
         } catch (IllegalArgumentException e) {
             throw new SaveCardException("Parâmetros inválidos para salvar o cartão");
 
