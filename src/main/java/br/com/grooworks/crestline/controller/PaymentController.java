@@ -1,19 +1,23 @@
 package br.com.grooworks.crestline.controller;
 
+import br.com.grooworks.crestline.domain.dto.CreateCustomerDto;
 import br.com.grooworks.crestline.domain.service.PaymentService;
 import com.braintreegateway.CreditCard;
-import com.braintreegateway.PaymentMethod;
+import com.braintreegateway.Customer;
 import com.braintreegateway.Result;
 import com.braintreegateway.Transaction;
+import jakarta.validation.Valid;
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/pagamento")
 @CrossOrigin(origins = "*")
 public class PaymentController {
 
+    @Autowired
     private PaymentService service;
 
     @SneakyThrows
@@ -30,9 +34,9 @@ public class PaymentController {
     }
 
     @PostMapping("/save")
-    public ResponseEntity<?> saveCard(@RequestParam String paymentMethodNonce, @RequestParam String customerId) {
-        Result<? extends PaymentMethod> result = service.saveCard(paymentMethodNonce, customerId);
-        return ResponseEntity.ok(result.getTarget());
+    public ResponseEntity<Customer> saveCardAndCustomer(@RequestBody @Valid CreateCustomerDto dto) {
+        Customer customer = service.saveCardAndCustomer(dto);
+        return ResponseEntity.ok(customer);
     }
 
     @PutMapping("/{token}")

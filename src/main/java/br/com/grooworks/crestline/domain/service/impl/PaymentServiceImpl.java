@@ -1,12 +1,16 @@
 package br.com.grooworks.crestline.domain.service.impl;
 
 
+import br.com.grooworks.crestline.domain.dto.CreateCustomerDto;
+import br.com.grooworks.crestline.domain.model.CustomerEntity;
+import br.com.grooworks.crestline.domain.repository.CustomerEntityRepository;
 import br.com.grooworks.crestline.domain.service.PaymentService;
 import br.com.grooworks.crestline.infra.exception.PaymentException;
 import br.com.grooworks.crestline.infra.exception.SaveCardException;
 import br.com.grooworks.crestline.infra.exception.UpdateCardException;
 import br.com.grooworks.crestline.infra.exception.deleteCreditCardException;
 import com.braintreegateway.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -18,6 +22,9 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentServiceImpl(BraintreeGateway gateway) {
         this.gateway = gateway;
     }
+
+    @Autowired
+    private CustomerEntityRepository repository;
 
     @Override
     public CreditCard getCard(String token) {
@@ -57,31 +64,31 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public Result<? extends PaymentMethod> saveCard(String paymentMethodNonce, String customerId) {
+    public Customer saveCardAndCustomer(CreateCustomerDto dto) {
         try {
-            PaymentMethodRequest request = new PaymentMethodRequest()
-                    .customerId(customerId)
-                    .paymentMethodNonce(paymentMethodNonce)
-                    .options()
-                    .makeDefault(true)
-                    .verifyCard(true)
-                    .done();
+            CustomerRequest request = new CustomerRequest()
+                    .firstName(dto.firstName())
+                    .email(dto.email())
+                    .customField("cpf", dto.cpf())
+                    .paymentMethodNonce(dto.paymentMethodNonce());
 
-            Result<? extends PaymentMethod> result = gateway.paymentMethod().create(request);
+            Result<Customer> result = gateway.customer().create(request);
 
             if (!result.isSuccess()) {
-                throw new SaveCardException(result.getMessage());
+                throw new SaveCardException("Erro ao criar cliente: " + result.getMessage());
             }
 
-            return result;
-        } catch (IllegalArgumentException e) {
-            throw new SaveCardException("Parâmetros inválidos para salvar o cartão");
+            Customer customer = result.getTarget();
 
-        } catch (SaveCardException e) {
-            throw e;
+            String paymentToken = customer.getPaymentMethods().get(0).getToken();
 
+            repository.save(
+                    new CustomerEntity(customer.getId(), dto.cpf(), paymentToken, 1L)
+            );
+
+            return customer;
         } catch (Exception e) {
-            throw new SaveCardException("Erro interno ao salvar cartão: " + e.getMessage());
+            throw new SaveCardException("Erro ao criar cliente e salvar cartão: " + e.getMessage());
         }
     }
 

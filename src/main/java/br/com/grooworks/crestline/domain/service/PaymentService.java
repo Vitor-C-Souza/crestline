@@ -1,7 +1,8 @@
 package br.com.grooworks.crestline.domain.service;
 
+import br.com.grooworks.crestline.domain.dto.CreateCustomerDto;
 import com.braintreegateway.CreditCard;
-import com.braintreegateway.PaymentMethod;
+import com.braintreegateway.Customer;
 import com.braintreegateway.Result;
 import com.braintreegateway.Transaction;
 
@@ -10,7 +11,7 @@ public interface PaymentService {
 
     Result<Transaction> pay(String token, String amount);
 
-    Result<? extends PaymentMethod> saveCard(String paymentMethodNonce, String customerId);
+    Customer saveCardAndCustomer(CreateCustomerDto dto);
 
     Result<CreditCard> updateCard(String token, String expirationDate, String cvv);
 

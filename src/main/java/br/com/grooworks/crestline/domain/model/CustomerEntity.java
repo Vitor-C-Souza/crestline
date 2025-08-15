@@ -8,16 +8,24 @@ import lombok.NoArgsConstructor;
 import java.util.UUID;
 
 @Entity
-@Table(name = "usuario_pagamento")
+@Table(name = "Costumer")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UsuarioPagamento {
+public class CustomerEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    
+
     private Long usuarioId;
     private String customerIdBraintree;
     private String paymentToken;
+    private String cpf;
+
+    public CustomerEntity(String customerId, String cpf, String paymentToken, Long userId) {
+        this.customerIdBraintree = customerId;
+        this.cpf = cpf;
+        this.paymentToken = paymentToken;
+        this.usuarioId = userId;
+    }
 }
