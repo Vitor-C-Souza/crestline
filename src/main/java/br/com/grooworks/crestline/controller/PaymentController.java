@@ -18,19 +18,13 @@ public class PaymentController {
 
     @SneakyThrows
     @GetMapping("/{token}")
-    public ResponseEntity<SaveCardResponseDTO> getCard(@PathVariable String token) {
+    public ResponseEntity<SaveCardResponseDTO> getCard(@PathVariable("token") String token) {
         SaveCardResponseDTO card = service.getCard(token);
         return ResponseEntity.ok(card);
     }
 
-    @GetMapping("/customer/user/{id}")
-    public ResponseEntity<CustomerResDto> getCustomer(@RequestParam Long id) {
-        CustomerResDto customer = service.getCustomerByUserId(id);
-        return ResponseEntity.ok(customer);
-    }
-
     @PostMapping("/pay")
-    public ResponseEntity<PaymentResDto> pay(@RequestParam String token, @RequestParam String amount) {
+    public ResponseEntity<PaymentResDto> pay(@RequestParam("token") String token, @RequestParam("amount") String amount) {
         PaymentResDto pay = service.pay(token, amount);
         return ResponseEntity.ok(pay);
     }
@@ -42,15 +36,15 @@ public class PaymentController {
     }
 
     @PutMapping("/{token}")
-    public ResponseEntity<CardDto> updateCard(@PathVariable String token,
-                                              @RequestParam String expirationDate,
-                                              @RequestParam String cvv) {
+    public ResponseEntity<CardDto> updateCard(@PathVariable("token") String token,
+                                              @RequestParam("expirationDate") String expirationDate,
+                                              @RequestParam("cvv") String cvv) {
         CardDto cardDto = service.updateCard(token, expirationDate, cvv);
         return ResponseEntity.ok(cardDto);
     }
 
     @DeleteMapping("/{token}")
-    public ResponseEntity<Void> deleteCard(@PathVariable String token) {
+    public ResponseEntity<Void> deleteCard(@PathVariable("token") String token) {
         service.deleteCreditCard(token);
         return ResponseEntity.noContent().build();
     }

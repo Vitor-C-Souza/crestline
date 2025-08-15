@@ -5,7 +5,10 @@ import br.com.grooworks.crestline.domain.dto.*;
 import br.com.grooworks.crestline.domain.model.CustomerEntity;
 import br.com.grooworks.crestline.domain.repository.CustomerEntityRepository;
 import br.com.grooworks.crestline.domain.service.PaymentService;
-import br.com.grooworks.crestline.infra.exception.*;
+import br.com.grooworks.crestline.infra.exception.PaymentException;
+import br.com.grooworks.crestline.infra.exception.SaveCardException;
+import br.com.grooworks.crestline.infra.exception.UpdateCardException;
+import br.com.grooworks.crestline.infra.exception.deleteCreditCardException;
 import com.braintreegateway.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -33,7 +36,7 @@ public class PaymentServiceImpl implements PaymentService {
 
             return new SaveCardResponseDTO(new CardDto(creditCard), customer);
         } catch (Exception e) {
-            throw new RuntimeException("Cartão não encontrado: " + e.getMessage());
+            throw new RuntimeException("Cartão não encontrado!");
         }
     }
 
@@ -64,19 +67,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         } catch (Exception e) {
             throw new PaymentException("Erro interno ao processar pagamento: " + e.getMessage());
-        }
-    }
-
-    @Override
-    public CustomerResDto getCustomerByUserId(Long id) {
-        CustomerEntity customerEntity = repository.findByUsuarioId(id)
-                .orElseThrow(() -> new CustomerNotFoundException("Não foi encontrado customer com esse id " + id));
-        try {
-            Customer customer = gateway.customer().find(customerEntity.getCustomerIdBraintree());
-
-            return new CustomerResDto(customer);
-        } catch (Exception e) {
-            throw new RuntimeException("Erro ao buscar cliente no Braintree: " + e.getMessage());
         }
     }
 
@@ -141,6 +131,9 @@ public class PaymentServiceImpl implements PaymentService {
             if (!result.isSuccess()) {
                 throw new deleteCreditCardException(result.getMessage());
             }
+
+            repository.findByPaymentToken(token)
+                    .ifPresent(repository::delete);
         } catch (IllegalArgumentException e) {
             throw new SaveCardException("Parâmetros inválidos para deletar o cartão");
 

@@ -7,8 +7,6 @@ public interface PaymentService {
 
     PaymentResDto pay(String token, String amount);
 
-    CustomerResDto getCustomerByUserId(Long id);
-
     CustomerResDto saveCardAndCustomer(CreateCustomerDto dto);
 
     CardDto updateCard(String token, String expirationDate, String cvv);
