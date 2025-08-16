@@ -91,7 +91,7 @@ public class PaymentServiceImpl implements PaymentService {
             CustomerEntity entity = new CustomerEntity(customer.getId(), dto.cpf(), paymentToken, 1L);
             repository.save(entity);
 
-            return new CustomerResDto(customer);
+            return new CustomerResDto(customer, paymentToken);
         } catch (Exception e) {
             throw new SaveCardException("Erro ao criar cliente e salvar cartão: " + e.getMessage());
         }
