@@ -7,6 +7,8 @@ import br.com.grooworks.crestline.domain.service.ContractService;
 import br.com.grooworks.crestline.domain.service.DocuSignService;
 import com.docusign.esign.client.ApiException;
 import lombok.SneakyThrows;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +19,10 @@ import java.util.List;
 @Service
 public class ContractServiceImpl implements ContractService {
 
+    @Autowired
     private ContractRepository repository;
+
+    @Autowired
     private DocuSignService docuSignService;
 
     @Override
@@ -55,7 +60,7 @@ public class ContractServiceImpl implements ContractService {
 
     @SneakyThrows
     @Override
-    public Contract checkStatus(String id)  {
+    public Contract checkStatus(String id) {
         Contract contract = get(id);
         String status = docuSignService.getEnvelope(contract.getEnvelopeId()).getStatus();
         contract.setStatus(status);
@@ -65,14 +70,14 @@ public class ContractServiceImpl implements ContractService {
 
     @SneakyThrows
     @Override
-    public void resend(String id)  {
+    public void resend(String id) {
         Contract contract = get(id);
         docuSignService.resendEnvelope(contract.getEnvelopeId());
     }
 
     @SneakyThrows
     @Override
-    public void delete(String id)  {
+    public void delete(String id) {
         Contract contract = get(id);
         docuSignService.voidEnvelope(contract.getEnvelopeId(), "Deletado pelo sistema");
         repository.deleteById(id);
