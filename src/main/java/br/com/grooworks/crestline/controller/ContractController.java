@@ -3,6 +3,7 @@ package br.com.grooworks.crestline.controller;
 import br.com.grooworks.crestline.domain.dto.SendContractDto;
 import br.com.grooworks.crestline.domain.model.Contract;
 import br.com.grooworks.crestline.domain.service.ContractService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/contract")
 public class ContractController {
+
+    @Autowired
     private ContractService service;
 
     @GetMapping("/{id}")
