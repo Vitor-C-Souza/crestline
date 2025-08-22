@@ -17,6 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/contract")
+@CrossOrigin(origins = "*")
 public class ContractController {
 
     @Autowired
