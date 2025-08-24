@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -41,6 +42,7 @@ public class ContractController {
             }
     )
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<Contract> get(@PathVariable("id") String id) {
         return ResponseEntity.ok(service.get(id));
     }
@@ -54,6 +56,7 @@ public class ContractController {
             }
     )
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<List<Contract>> list() {
         return ResponseEntity.ok(service.list());
     }
@@ -84,6 +87,7 @@ public class ContractController {
                     @ApiResponse(responseCode = "400", description = "Dados inválidos")
             }
     )
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @PostMapping("/send")
     public ResponseEntity<Contract> send(
             @RequestBody @Valid SendContractDto dto,
@@ -102,6 +106,7 @@ public class ContractController {
                             content = @Content(mediaType = "application/pdf"))
             }
     )
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @GetMapping("/{id}/download")
     public ResponseEntity<byte[]> download(@PathVariable("id") String id) {
         byte[] pdf = service.download(id);
@@ -120,6 +125,7 @@ public class ContractController {
             }
     )
     @GetMapping("/{id}/document")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<Map<String, Object>> getDoc(@PathVariable String id) {
         byte[] pdf = service.download(id);
         return ResponseEntity.ok(Map.of("contractId", id, "base64", Base64.getEncoder().encodeToString(pdf)));
@@ -133,6 +139,7 @@ public class ContractController {
                             content = @Content(schema = @Schema(implementation = Contract.class)))
             }
     )
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @PatchMapping("/{id}/status")
     public Contract updateStatus(@PathVariable("id") String id) {
         return service.checkStatus(id);
@@ -146,6 +153,7 @@ public class ContractController {
             }
     )
     @PostMapping("/{id}/resend")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> resend(@PathVariable("id") String id) {
         service.resend(id);
         return ResponseEntity.noContent().build();
@@ -159,6 +167,7 @@ public class ContractController {
             }
     )
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable("id") String id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
