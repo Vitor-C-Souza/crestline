@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -24,6 +25,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/contract")
 @CrossOrigin(origins = "*")
+@SecurityRequirement(name = "bearerAuth")
 public class ContractController {
 
     @Autowired
@@ -84,7 +86,7 @@ public class ContractController {
     )
     @PostMapping("/send")
     public ResponseEntity<Contract> send(
-            @org.springframework.web.bind.annotation.RequestBody @Valid SendContractDto dto,
+            @RequestBody @Valid SendContractDto dto,
             UriComponentsBuilder uriComponentsBuilder) {
 
         Contract contract = service.createAndSend(dto);

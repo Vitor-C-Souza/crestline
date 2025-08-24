@@ -6,11 +6,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -20,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/listing")
 @CrossOrigin(origins = "*")
+@SecurityRequirement(name = "bearerAuth")
 public class ListingController {
 
     @Autowired
@@ -34,6 +36,7 @@ public class ListingController {
             }
     )
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<List<ListingDTO>> getAll() {
         return ResponseEntity.ok(service.findAll());
     }
@@ -48,6 +51,7 @@ public class ListingController {
             }
     )
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<ListingDTO> getById(@PathVariable("id") String id) {
         ListingDTO dto = service.getById(id);
         return ResponseEntity.ok(dto);
@@ -56,7 +60,7 @@ public class ListingController {
     @Operation(
             summary = "Criar novo listing",
             tags = {"Listing"},
-            requestBody = @RequestBody(
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Dados do novo listing",
                     required = true,
                     content = @Content(
@@ -106,6 +110,7 @@ public class ListingController {
             }
     )
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ListingDTO> create(
             @RequestBody @Valid ListingDTO dto,
             UriComponentsBuilder uriComponentsBuilder
@@ -118,7 +123,7 @@ public class ListingController {
     @Operation(
             summary = "Atualizar listing existente",
             tags = {"Listing"},
-            requestBody = @RequestBody(
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Dados atualizados do listing",
                     required = true,
                     content = @Content(schema = @Schema(implementation = ListingDTO.class))
@@ -130,6 +135,7 @@ public class ListingController {
             }
     )
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ListingDTO> update(@PathVariable("id") String id, @RequestBody @Valid ListingDTO dto) {
         ListingDTO update = service.update(dto, id);
         return ResponseEntity.ok(update);
@@ -144,6 +150,7 @@ public class ListingController {
             }
     )
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable("id") String id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
