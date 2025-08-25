@@ -1,8 +1,7 @@
 package br.com.grooworks.crestline.controller;
 
-import br.com.grooworks.crestline.domain.dto.AuthRequest;
-import br.com.grooworks.crestline.domain.dto.AuthResponse;
-import br.com.grooworks.crestline.domain.dto.RegisterRequest;
+import br.com.grooworks.crestline.domain.dto.*;
+import br.com.grooworks.crestline.domain.model.Role;
 import br.com.grooworks.crestline.domain.model.User;
 import br.com.grooworks.crestline.domain.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +10,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -66,5 +67,40 @@ public class AuthController {
             @RequestBody AuthRequest req
     ) {
         return ResponseEntity.ok(authService.login(req));
+    }
+
+    @PutMapping("/update/{id}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(
+            summary = "Atualizar dados de autenticação",
+            tags = {"Autenticação"},
+            description = "Atualiza username, email e/ou password do usuário",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Dados do usuário a serem atualizados",
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = UpdateAuthRequest.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                    value = "{ \"username\": \"novoUser\", \"email\": \"novoEmail@example.com\", \"password\": \"novaSenha123\" }"
+                            )
+                    )
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Usuário atualizado com sucesso"),
+                    @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
+            }
+    )
+    public ResponseEntity<UpdateAuthResponse> updateUser(
+            @PathVariable("id") String id,
+            @RequestBody UpdateAuthRequest req
+    ) {
+        User loggedUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (!loggedUser.getId().equals(id) && loggedUser.getRole() != Role.ADMIN) {
+            return ResponseEntity.status(403).build();
+        }
+
+        UpdateAuthResponse updated = authService.updateUser(id, req);
+        return ResponseEntity.ok(updated);
     }
 }
