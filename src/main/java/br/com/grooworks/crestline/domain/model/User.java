@@ -37,6 +37,9 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Role role;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Perfil perfil;
+
     public User() {
     }
 
