@@ -8,8 +8,7 @@ public record CreateCustomerDto(
         @NotBlank String firstName,
         @NotBlank String email,
         @NotBlank String cpf,
-        @NotBlank String paymentMethodNonce,
-        Long userId
+        @NotBlank String paymentMethodNonce
 ) {
 
     public CreateCustomerDto(CustomerEntity customerEntity, Customer customer) {
@@ -17,8 +16,7 @@ public record CreateCustomerDto(
                 customer.getFirstName(),
                 customer.getEmail(),
                 customerEntity.getCpf(),
-                customerEntity.getPaymentToken(),
-                customerEntity.getUsuarioId()
+                customerEntity.getPaymentToken()
         );
     }
 }

@@ -1,5 +1,6 @@
 package br.com.grooworks.crestline.controller;
 
+import br.com.grooworks.crestline.domain.dto.ContractResponseDto;
 import br.com.grooworks.crestline.domain.dto.SendContractDto;
 import br.com.grooworks.crestline.domain.model.Contract;
 import br.com.grooworks.crestline.domain.service.ContractService;
@@ -43,8 +44,8 @@ public class ContractController {
     )
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    public ResponseEntity<Contract> get(@PathVariable("id") String id) {
-        return ResponseEntity.ok(service.get(id));
+    public ResponseEntity<ContractResponseDto> get(@PathVariable("id") String id) {
+        return ResponseEntity.ok(service.getContract(id));
     }
 
     @Operation(
@@ -57,7 +58,7 @@ public class ContractController {
     )
     @GetMapping
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    public ResponseEntity<List<Contract>> list() {
+    public ResponseEntity<List<ContractResponseDto>> list() {
         return ResponseEntity.ok(service.list());
     }
 
@@ -89,13 +90,13 @@ public class ContractController {
     )
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @PostMapping("/send")
-    public ResponseEntity<Contract> send(
+    public ResponseEntity<ContractResponseDto> send(
             @RequestBody @Valid SendContractDto dto,
             UriComponentsBuilder uriComponentsBuilder) {
 
-        Contract contract = service.createAndSend(dto);
-        URI uri = uriComponentsBuilder.path("/contract/{id}").buildAndExpand(contract.getId()).toUri();
-        return ResponseEntity.created(uri).body(contract);
+        ContractResponseDto responseDto = service.createAndSend(dto);
+        URI uri = uriComponentsBuilder.path("/contract/{id}").buildAndExpand(responseDto.id()).toUri();
+        return ResponseEntity.created(uri).body(responseDto);
     }
 
     @Operation(
@@ -141,8 +142,8 @@ public class ContractController {
     )
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @PatchMapping("/{id}/status")
-    public Contract updateStatus(@PathVariable("id") String id) {
-        return service.checkStatus(id);
+    public ResponseEntity<ContractResponseDto> updateStatus(@PathVariable("id") String id) {
+        return ResponseEntity.ok(service.checkStatus(id));
     }
 
     @Operation(

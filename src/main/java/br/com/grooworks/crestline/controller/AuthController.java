@@ -63,7 +63,7 @@ public class AuthController {
     )
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
-            @org.springframework.web.bind.annotation.RequestBody AuthRequest req
+            @RequestBody AuthRequest req
     ) {
         return ResponseEntity.ok(authService.login(req));
     }

@@ -7,7 +7,5 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface CustomerEntityRepository extends JpaRepository<CustomerEntity, UUID> {
-    Optional<CustomerEntity> findByUsuarioId(Long usuarioId);
-
     Optional<CustomerEntity> findByPaymentToken(String token);
 }

@@ -17,15 +17,19 @@ public class CustomerEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private Long usuarioId;
+
     private String customerIdBraintree;
     private String paymentToken;
     private String cpf;
 
-    public CustomerEntity(String customerId, String cpf, String paymentToken, Long userId) {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    private User user;
+
+    public CustomerEntity(String customerId, String cpf, String paymentToken, User user) {
         this.customerIdBraintree = customerId;
         this.cpf = cpf;
         this.paymentToken = paymentToken;
-        this.usuarioId = userId;
+        this.user = user;
     }
 }

@@ -48,8 +48,7 @@ public class PaymentController {
               "firstName": "Vitor Souza",
               "email": "vitor@email.com",
               "cpf": "12345678901",
-              "paymentMethodNonce": "fake-valid-nonce",
-              "userId": 1
+              "paymentMethodNonce": "fake-valid-nonce"
             }"""))), responses = {@ApiResponse(responseCode = "200", description = "Cliente e cartão salvos com sucesso", content = @Content(schema = @Schema(implementation = CustomerResDto.class))), @ApiResponse(responseCode = "400", description = "Dados inválidos")})
     @PostMapping("/save")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")

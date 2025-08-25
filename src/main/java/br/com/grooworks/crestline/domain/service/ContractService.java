@@ -1,20 +1,20 @@
 package br.com.grooworks.crestline.domain.service;
 
+import br.com.grooworks.crestline.domain.dto.ContractResponseDto;
 import br.com.grooworks.crestline.domain.dto.SendContractDto;
-import br.com.grooworks.crestline.domain.model.Contract;
 
 import java.util.List;
 
 public interface ContractService {
-    Contract createAndSend(SendContractDto dto);
+    ContractResponseDto createAndSend(SendContractDto dto);
 
-    Contract get(String id);
+    ContractResponseDto getContract(String id);
 
-    List<Contract> list();
+    List<ContractResponseDto> list();
 
     byte[] download(String id);
 
-    Contract checkStatus(String id);
+    ContractResponseDto checkStatus(String id);
 
     void resend(String id);
 

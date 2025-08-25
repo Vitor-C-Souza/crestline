@@ -31,7 +31,11 @@ public class Contract {
     private Instant createdAt;
     private Instant updatedAt;
 
-    public Contract(SendContractDto dto, String envelopeId) {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    private User user;
+
+    public Contract(SendContractDto dto, String envelopeId, User user) {
         this.title = dto.title();
         this.description = dto.description();
         this.signerName = dto.signerName();
@@ -41,5 +45,6 @@ public class Contract {
         this.status = "Sent";
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
+        this.user = user;
     }
 }

@@ -11,7 +11,7 @@ public record PerfilResponse(
         String lastName,
         String telefone,
         String endereco,
-        String avatarBase64, // devolve já convertido de byte[] -> Base64
+        String avatarBase64,
         String userId,
         String username,
         String email

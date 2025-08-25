@@ -3,7 +3,9 @@ package br.com.grooworks.crestline.domain.service.impl;
 
 import br.com.grooworks.crestline.domain.dto.*;
 import br.com.grooworks.crestline.domain.model.CustomerEntity;
+import br.com.grooworks.crestline.domain.model.User;
 import br.com.grooworks.crestline.domain.repository.CustomerEntityRepository;
+import br.com.grooworks.crestline.domain.repository.UserRepository;
 import br.com.grooworks.crestline.domain.service.PaymentService;
 import br.com.grooworks.crestline.infra.exception.PaymentException;
 import br.com.grooworks.crestline.infra.exception.SaveCardException;
@@ -14,17 +16,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.NoSuchElementException;
 
 @Service
 public class PaymentServiceImpl implements PaymentService {
     private final BraintreeGateway gateway;
+    @Autowired
+    private CustomerEntityRepository repository;
+    @Autowired
+    private UserRepository userRepository;
+
 
     public PaymentServiceImpl(BraintreeGateway gateway) {
         this.gateway = gateway;
     }
-
-    @Autowired
-    private CustomerEntityRepository repository;
 
     @Override
     public SaveCardResponseDTO getCard(String token) {
@@ -72,6 +77,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public CustomerResDto saveCardAndCustomer(CreateCustomerDto dto) {
+        User user = userRepository.findByEmail(dto.email()).orElseThrow(() -> new NoSuchElementException("Não foi encontrado nenhum usuario com este email " + dto.email()));
         try {
             CustomerRequest request = new CustomerRequest()
                     .firstName(dto.firstName())
@@ -88,7 +94,7 @@ public class PaymentServiceImpl implements PaymentService {
             Customer customer = result.getTarget();
 
             String paymentToken = customer.getPaymentMethods().get(0).getToken();
-            CustomerEntity entity = new CustomerEntity(customer.getId(), dto.cpf(), paymentToken, 1L);
+            CustomerEntity entity = new CustomerEntity(customer.getId(), dto.cpf(), paymentToken, user);
             repository.save(entity);
 
             return new CustomerResDto(customer, paymentToken);

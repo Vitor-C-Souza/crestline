@@ -1,8 +1,11 @@
 package br.com.grooworks.crestline.domain.service.impl;
 
+import br.com.grooworks.crestline.domain.dto.ContractResponseDto;
 import br.com.grooworks.crestline.domain.dto.SendContractDto;
 import br.com.grooworks.crestline.domain.model.Contract;
+import br.com.grooworks.crestline.domain.model.User;
 import br.com.grooworks.crestline.domain.repository.ContractRepository;
+import br.com.grooworks.crestline.domain.repository.UserRepository;
 import br.com.grooworks.crestline.domain.service.ContractService;
 import br.com.grooworks.crestline.domain.service.DocuSignService;
 import br.com.grooworks.crestline.infra.exception.ContractNotFoundException;
@@ -11,15 +14,16 @@ import br.com.grooworks.crestline.infra.exception.DocuSignResendException;
 import br.com.grooworks.crestline.infra.exception.DocuSignSendException;
 import com.docusign.esign.client.ApiException;
 import lombok.SneakyThrows;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @Service
 public class ContractServiceImpl implements ContractService {
@@ -30,8 +34,13 @@ public class ContractServiceImpl implements ContractService {
     @Autowired
     private DocuSignService docuSignService;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @Override
-    public Contract createAndSend(SendContractDto dto) {
+    @Transactional
+    public ContractResponseDto createAndSend(SendContractDto dto) {
+        User user = userRepository.findByEmail(dto.signerEmail()).orElseThrow(() -> new NoSuchElementException("Usuario com este email não encontrado " + dto.signerEmail()));
         byte[] pdf = Base64.getDecoder().decode(dto.base64Pdf());
         String envelopeId;
         try {
@@ -39,23 +48,29 @@ public class ContractServiceImpl implements ContractService {
         } catch (ApiException e) {
             throw new DocuSignSendException("Erro ao enviar contrato", e);
         }
-        Contract contract = new Contract(dto, envelopeId);
-        return repository.save(contract);
+
+        Contract contract = new Contract(dto, envelopeId, user);
+        Contract save = repository.save(contract);
+        return new ContractResponseDto(save);
     }
 
     @Override
-    public Contract get(String id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new ContractNotFoundException("Contrato não encontrado com id: " + id));
+    @Transactional(readOnly = true)
+    public ContractResponseDto getContract(String id) {
+        return new ContractResponseDto(get(id));
     }
 
     @Override
-    public List<Contract> list() {
-        return repository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+    @Transactional(readOnly = true)
+    public List<ContractResponseDto> list() {
+        return repository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream()
+                .map(ContractResponseDto::new)
+                .collect(Collectors.toList());
     }
 
     @SneakyThrows
     @Override
+    @Transactional
     public byte[] download(String id) {
         Contract contract = get(id);
         return docuSignService.getDocumentPdf(contract.getEnvelopeId(), contract.getDocumentId());
@@ -63,16 +78,19 @@ public class ContractServiceImpl implements ContractService {
 
     @SneakyThrows
     @Override
-    public Contract checkStatus(String id) {
+    @Transactional
+    public ContractResponseDto checkStatus(String id) {
         Contract contract = get(id);
         String status = docuSignService.getEnvelope(contract.getEnvelopeId()).getStatus();
         contract.setStatus(status);
         contract.setUpdatedAt(Instant.now());
-        return repository.save(contract);
+        Contract save = repository.save(contract);
+        return new ContractResponseDto(save);
     }
 
     @SneakyThrows
     @Override
+    @Transactional
     public void resend(String id) {
         Contract contract = get(id);
         try {
@@ -84,6 +102,7 @@ public class ContractServiceImpl implements ContractService {
 
     @SneakyThrows
     @Override
+    @Transactional
     public void delete(String id) {
         Contract contract = get(id);
         try {
@@ -92,5 +111,11 @@ public class ContractServiceImpl implements ContractService {
         } catch (ApiException e) {
             throw new DocuSignDeleteException("Erro ao deletar contrato", e);
         }
+    }
+
+    @Transactional(readOnly = true)
+    private Contract get(String id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ContractNotFoundException("Contrato não encontrado com id: " + id));
     }
 }
